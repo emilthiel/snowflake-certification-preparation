@@ -2,7 +2,7 @@
 use role sysadmin;
 use database snowflake_sample_data;
 use schema tpch_sf1;
-use warehouse prep_wh;
+use warehouse compute_wh;
 select current_schema();
 
 -- DENSE_RANK function
@@ -45,3 +45,48 @@ select
     dense_rank() over (partition by state order by bushels desc)
 from
     public.corn_production;
+
+
+/*
+NTILE
+Divides an ordered data set equally into the number of buckets specified by constant_value. Buckets are sequentially numbered 1 through constant_value.
+
+Usage Notes
+If the data is partitioned, then the data is divided into buckets equally within each partition. For example, if the number of buckets is 3, and if the data is partitioned by province, then approximately 1/3 of the rows for each province are put into each bucket.
+
+If the statement has an ORDER BY clause for the output, as well as an ORDER BY clause for the NTILE function, the two operate independently; the ORDER BY for the NTILE function influences which rows are assigned to each bucket, while the ORDER BY for the output determines the order in which the output rows are shown.
+ */
+
+select * from tpch_sf1.customer limit 100;
+
+select 
+    *,
+    ntile(4) over (partition by c_nationkey order by c_nationkey)
+from 
+    tpch_sf1.customer 
+limit 10000;
+
+
+with data as (
+    select 
+        $1 as farmer_id,
+        $2 as state,
+        $3 as bushels
+    from
+        (
+            values
+            (1, 'Iowa', 100),
+            (2, 'Iowa', 110),
+            (3, 'Kansas', 120),
+            (4, 'Kansas', 130),
+            (5, 'Iowa', 110),
+            (6,'Iowa', 110)
+        )
+)
+
+select
+    *,
+    ntile(2) over (partition by state order by farmer_id) as ntile_3
+from  
+    data
+order by ntile_3; 
